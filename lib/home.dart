@@ -1,111 +1,161 @@
-import 'package:appnews/models/newsResponse.dart';
-import 'package:appnews/services/news_services.dart';
+
+import 'dart:async';
+
+import 'package:appnews/controller/home_controller.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-// import 'package:newsapp/models/newsResponse.dart';
-// import 'package:newsapp/services/news_services.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+   late StreamSubscription subscription;
+  var isDeviceConnected = false;
+  bool isAlertSet = false;
+
+  @override
+  void initState() {
+    getConnectivity();
+    super.initState();
+  }
+
+  getConnectivity() => subscription = Connectivity()
+          .onConnectivityChanged
+          .listen((ConnectivityResult result) async {
+        isDeviceConnected = await InternetConnectionChecker().hasConnection;
+        if (!isDeviceConnected && isAlertSet == false) {
+          showDialogBox();
+          setState(() => isAlertSet = true);
+        }
+      });
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
+  }
+  @override
+  // void initState() {
+  //   super.initState();
+  // }
+
   @override
   Widget build(BuildContext context) {
+        Provider.of<NewsProvider>(context, listen: false).getAllNews();
+
+    print("erre");
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          toolbarHeight: 100,
-          flexibleSpace: const Image(
-            image: AssetImage('asset/th.jpg'),
-            width: 600,
+          toolbarHeight: 125,
+          flexibleSpace: Image.asset(
+            'asset/th.jpg',
             fit: BoxFit.cover,
-          ),
-          // backgroundColor: Colors.transparent,
+          ), // Use 'Image.asset' to load images from assets
         ),
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text.rich(TextSpan(children: [
-                TextSpan(
-                    text: "Discover",
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white60)),
-                TextSpan(
-                    text: "The World Tech",
-                    style: TextStyle(
-                        color: Color.fromARGB(255, 8, 0, 254),
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold))
-              ])
+        body: Consumer<NewsProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
-                  //  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
-              const Text(
-                "Find intresting article and Updates",
-                style: TextStyle(color: Color.fromARGB(255, 222, 222, 222)),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              Expanded(
-                  child: FutureBuilder<List<Article>>(
-                future: NewsApiServices().fetchNewsArticle(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(
-                        child: CircularProgressIndicator(
-                      backgroundColor: Colors.redAccent,
-                    ));
-                  } else {
-                    return Container(
-                      child: ListView.builder(
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) {
-                          return Column(
-                            children: [
-                              Text(
-                                snapshot.data![index].publishedAt.toString(),
-                                style: TextStyle(
-                                    color: Color.fromARGB(255, 255, 255, 255)),
-                              ),
-                              Card(
-                                child: Image(
-                                    image: NetworkImage(snapshot
-                                        .data![index].urlToImage
-                                        .toString())),
-                              ),
-                              Text(
-                                snapshot.data![index].description.toString(),
-                                style: TextStyle(
-                                    color: Color.fromARGB(255, 255, 255, 255)),
-                              ),
-                              Text(
-                                snapshot.data![index].url.toString(),
-                                style: TextStyle(
-                                    color: Color.fromARGB(255, 34, 0, 255)),
-                              ),
-
-                            
-                            ],
-                          );
-                        },
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text.rich(
+                    TextSpan(children: [
+                      TextSpan(
+                        text: "Discover",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white60,
+                        ),
                       ),
-                    );
-                  }
-                },
-              ))
-            ],
-          ),
+                      TextSpan(
+                        text: "The World Tech",
+                        style: TextStyle(
+                          color: Color(0xFF0800FE),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ]),
+                  ),
+                 const Text(
+                    "Find interesting articles and Updates",
+                    style: TextStyle(color: Color(0xFFDEDEDE)),
+                  ),
+                 const SizedBox(
+                    height: 20,
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: provider.articles.length,
+                      itemBuilder: (context, index) {
+                        return Column(
+                          children: [
+                            Text(
+                              provider.articles[index].publishedAt.toString(),
+                              style:const TextStyle(color: Colors.white),
+                            ),
+                            Card(
+                              child: Image.network(provider
+                                  .articles[index].urlToImage
+                                  .toString()),
+                            ),
+                            Text(
+                              provider.articles[index].description.toString(),
+                              style:const TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              provider.articles[index].url.toString(),
+                              style:const TextStyle(color: Color(0xFF2200FF)),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
-        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+        backgroundColor:const Color(0xFF000000),
       ),
     );
   }
+  showDialogBox() => showCupertinoDialog<String>(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+            title: const Text("No Connection"),
+            content: const Text('Please check Internet'),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context, "Cancel");
+                    setState(() => isAlertSet = false);
+                    isDeviceConnected =
+                        await InternetConnectionChecker().hasConnection;
+                    if (!isDeviceConnected) {
+                      showDialogBox();
+                      setState(
+                        () => isAlertSet = true,
+                      );
+                    }
+                    ;
+                  },
+                  child: Text("OK")),
+            ],
+          ));
 }

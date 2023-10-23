@@ -24,7 +24,7 @@ class NewsApiServices {
       }
     } catch (error) {
       print("An error occurred: $error");
-      rethrow;
+      return [];
     }
   }
 }
