@@ -4,8 +4,7 @@ import '../models/newsResponse.dart';
 
 class NewsApiServices {
   final String _url =
-      "https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=68d739da303c412184eda0a77b811b3d";
-
+      "https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=0ff5445eb9874eab91f43a3f02a012b4";
   Dio? _dio;
 
   NewsApiServices() {
@@ -23,6 +22,7 @@ class NewsApiServices {
         throw Exception("Failed to fetch news data");
       }
     } catch (error) {
+      
       print("An error occurred: $error");
       return [];
     }

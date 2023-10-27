@@ -1,6 +1,6 @@
-
 import 'dart:async';
 
+import 'package:appnews/controller/connectivity_provider.dart';
 import 'package:appnews/controller/home_controller.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
@@ -14,40 +14,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-   late StreamSubscription subscription;
-  var isDeviceConnected = false;
-  bool isAlertSet = false;
-
   @override
   void initState() {
-    getConnectivity();
+    Provider.of<InternetConnectivityProvider>(context, listen: false)
+        .getInternetConnectivity(context);
+    Provider.of<NewsProvider>(context, listen: false).getAllNews();
     super.initState();
   }
 
-  getConnectivity() => subscription = Connectivity()
-          .onConnectivityChanged
-          .listen((ConnectivityResult result) async {
-        isDeviceConnected = await InternetConnectionChecker().hasConnection;
-        if (!isDeviceConnected && isAlertSet == false) {
-          showDialogBox();
-          setState(() => isAlertSet = true);
-        }
-      });
-
-  @override
-  void dispose() {
-    subscription.cancel();
-    super.dispose();
-  }
-  @override
-  // void initState() {
-  //   super.initState();
-  // }
-
   @override
   Widget build(BuildContext context) {
-        Provider.of<NewsProvider>(context, listen: false).getAllNews();
-
     print("erre");
     return SafeArea(
       child: Scaffold(
@@ -58,6 +34,7 @@ class _HomePageState extends State<HomePage> {
             fit: BoxFit.cover,
           ), // Use 'Image.asset' to load images from assets
         ),
+        
         body: Consumer<NewsProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading) {
@@ -65,7 +42,6 @@ class _HomePageState extends State<HomePage> {
                 child: CircularProgressIndicator(),
               );
             }
-
             return Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -91,11 +67,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ]),
                   ),
-                 const Text(
+                  const Text(
                     "Find interesting articles and Updates",
                     style: TextStyle(color: Color(0xFFDEDEDE)),
                   ),
-                 const SizedBox(
+                  const SizedBox(
                     height: 20,
                   ),
                   Expanded(
@@ -106,7 +82,7 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Text(
                               provider.articles[index].publishedAt.toString(),
-                              style:const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: Colors.white),
                             ),
                             Card(
                               child: Image.network(provider
@@ -115,11 +91,11 @@ class _HomePageState extends State<HomePage> {
                             ),
                             Text(
                               provider.articles[index].description.toString(),
-                              style:const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: Colors.white),
                             ),
                             Text(
                               provider.articles[index].url.toString(),
-                              style:const TextStyle(color: Color(0xFF2200FF)),
+                              style: const TextStyle(color: Color(0xFF2200FF)),
                             ),
                           ],
                         );
@@ -131,31 +107,8 @@ class _HomePageState extends State<HomePage> {
             );
           },
         ),
-        backgroundColor:const Color(0xFF000000),
+        backgroundColor: const Color(0xFF000000),
       ),
     );
   }
-  showDialogBox() => showCupertinoDialog<String>(
-      context: context,
-      builder: (BuildContext context) => CupertinoAlertDialog(
-            title: const Text("No Connection"),
-            content: const Text('Please check Internet'),
-            actions: <Widget>[
-              TextButton(
-                  onPressed: () async {
-                    Navigator.pop(context, "Cancel");
-                    setState(() => isAlertSet = false);
-                    isDeviceConnected =
-                        await InternetConnectionChecker().hasConnection;
-                    if (!isDeviceConnected) {
-                      showDialogBox();
-                      setState(
-                        () => isAlertSet = true,
-                      );
-                    }
-                    ;
-                  },
-                  child: Text("OK")),
-            ],
-          ));
 }

@@ -1,9 +1,10 @@
+import 'package:appnews/controller/connectivity_provider.dart';
 import 'package:appnews/controller/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 
-import 'home.dart';
+import 'view/home.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,8 +19,12 @@ class MyApp extends StatelessWidget {
     
     return MultiProvider
     (providers: [
-      ChangeNotifierProvider(create:(_)=> NewsProvider() )
-    ],
+      ChangeNotifierProvider(create:(_)=> NewsProvider(),
+      
+     ),
+           ChangeNotifierProvider(create:(_)=> InternetConnectivityProvider(),
+
+    )],
       child: MaterialApp(
         
         debugShowCheckedModeBanner: false,
